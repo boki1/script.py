@@ -32,7 +32,6 @@ except ImportError:
 
 previous_color_ = color.WHITE
 def get_color():
-    return ''
     global previous_color_
     colors = [color.GREEN, color.YELLOW, color.BLUE, color.MAGENTA, color.CYAN]
     while True:
@@ -45,12 +44,11 @@ def get_color():
 def print_style(*args, **kwargs):
         print(f"\n{get_color()} > ", end='')
         print(*args, **kwargs)
-        # print(Style.RESET_ALL)
+        print(Style.RESET_ALL)
 
 
 def print_scream(string):
-        print(f"{color.RED}{string}")
-        # print(f"{color.RED}{string}{Style.RESET_ALL}")
+        print(f"{color.RED}{string}{Style.RESET_ALL}")
 
 
 def do_if(cmd, msg, qprompt=False):
@@ -92,23 +90,28 @@ def autocomplete(arg):
     return None
 
 
-def do_build(test=False, doc=False):
+def do_config():
     try:
         os.mkdir("build/")
         print("INFO: Created 'build/' directory")
     except OSError:
         print_scream("INFO: 'build/' directory already exists")
 
+    cmake_command = f"cmake -S. -Bbuild -GNinja -DCMAKE_EXPORT_COMPILE_COMMANDS=1"
+    print_style("Configuring project")
+    sp.run(cmake_command.split())
+
+
+def do_build(test=False, doc=False):
+    do_config()
+
     building = "Building project"
-    cmake_command = f"cmake -S. -Bbuild -GNinja"
-    ninja_command = "ninja -Cbuild -j4"
+    ninja_command = "ninja -Cbuild -j0"
 
     if test:
         os.environ["BUILD_TESTS"] = "1"
         building += ' and tests'
 
-    print_style("Configuring project")
-    sp.run(cmake_command.split())
 
     print_style(building)
     sp.run(ninja_command.split())
@@ -146,7 +149,7 @@ def do_clean(is_kind=False):
 
 def usage():
     global AvailableParams
-    usage_str = "\n\tMultifunctional utility script\n\t=============================\n\n"
+    usage_str = "\n\tEugene multifunctional script\n\t=============================\n\n"
     for f in AvailableParams:
         usage_str += f"\t• {get_color()}{f.field}{Style.RESET_ALL} is used to {f.desc}\n"
         for sc in f.subcmds:
@@ -186,6 +189,9 @@ def parse(cmd_line, cmd, cmd_args, cmd_argc):
     elif cmd == 'version':
         print("Eugene 0.01")
 
+    elif cmd == 'config':
+        do_config()
+
     else:
         usage(), print('\n')
         actual_cmd = autocomplete(cmd)
@@ -200,4 +206,3 @@ if __name__ == "__main__":
 
     args = [arg.lower() for arg in sys.argv]
     parse(args[1:], args[1], args[2:], len(args) - 2)
-    
